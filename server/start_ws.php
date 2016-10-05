@@ -1,0 +1,65 @@
+<?php
+require('WebSocket.class.php');
+$ws = new Ws('127.0.0.1', '8080', 1000);
+$ws->function['add']   = 'add_callback';
+$ws->function['send']  = 'send_callback';
+$ws->function['close'] = 'close_callback';
+$ws->start_server();
+
+//回调函数们
+function add_callback($ws) {
+	$data = count($ws->accept);
+ 	send_to_all($data, 'num', $ws);
+}
+
+function close_callback($ws) {
+	$data = count($ws->accept);
+	send_to_all($data, 'num', $ws);
+}
+
+function send_callback($data, $index, $ws) {
+	$to_user_index = -1;
+    if(strpos($data, ',') === false){
+        $msg = $data;
+    }else{
+        list($msg, $to_user_index) = explode(',', $data);
+    }
+
+
+	$data = json_encode(array(
+		'text' => $msg,
+		'from_user' => $index, // from accept index
+	));
+
+	if($to_user_index >= 0){
+		send_to_single($to_user_index, $data, 'text', $ws);
+		send_to_single($index, $data, 'text', $ws);
+	}else{
+		send_to_all($data, 'text', $ws);
+	}
+}
+
+function send_to_all($data, $type, $ws){
+	$res = array(
+		'type' => $type,
+		'msg'  => $data,
+	);
+	$res = json_encode($res);
+	$res = $ws->frame($res);
+	foreach ($ws->accept as $key => $accept) {
+		print_r($accept);
+		socket_write($accept, $res, strlen($res));
+	}
+}
+
+function send_to_single($index, $data, $type, $ws){
+	$response = array(
+		'type' => $type,
+		'msg'  => $data,
+	);
+	$response = json_encode($response);
+	$response = $ws->frame($response);
+	socket_write($ws->accept[$index], $response, strlen($response));
+}
+
+

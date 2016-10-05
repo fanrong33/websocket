@@ -1,0 +1,123 @@
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>websocket聊天室</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
+</head>
+<body>
+    <div class="row">
+        <ul class="breadcrumb">
+            <li class="active">当前在线人数 <span id="user_num"></span> 人</li>
+        </ul>
+    </div>
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="widget-container">
+                <div class="heading"><i class="icon-warning-sign"></i></div>
+                <form class="form-horizontal" role="form">
+                    <div class="form-group">
+                        <div class="col-sm-12">
+                            <div class="form-control" id="message" style="height:200px; overflow:scroll;overflow-x:hidden"></div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-sm-2" style="padding-right: 0;">
+                            <input type="text" class="form-control" id="name" placeholder="姓名">
+                        </div>
+                        <div class="col-sm-8" style="padding-right: 0;">
+                            <input type="text" class="form-control" id="content" placeholder="请输入要发送的内容" onkeydown="enter_press(sendMsg)">
+                        </div>
+                        <div class="col-sm-2">
+                            <button type="button" class="btn btn-success btn-block" id="J_send">发 送</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="http://cdn.bootcss.com/jquery/2.1.4/jquery.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+
+    });
+    	var web_socket_url = 'ws://127.0.0.1:8080'; 
+    	var ws = new WebSocket(web_socket_url);
+    	var is_connect = false;
+        ws.onopen    = onOpen;
+        ws.onclose   = onClose;
+        ws.onmessage = onMessage;
+        ws.onerror   = onError;
+
+    	function onOpen(event) { 
+    		console.log("连接服务器成功");
+    		is_connect = true;
+    	} 
+    	function onClose(event) { 
+    		console.log("close socket"); 
+            ws.close(); //关闭TCP连接
+    	} 
+    	function onMessage(event) {
+    		var data = JSON.parse(event.data);
+    		switch (data.type) {
+    			case 'text':
+    				addMsg(data.msg);
+    				break;
+    			case 'num' :
+    				updataUserNum(data.msg);
+    				break;
+    		}
+    		
+    		console.log('Retrieved data from server: ' + event.data);
+    	}
+    	function onError(event) { 
+    		console.log('Error occured: ' + event.data); 
+    	}
+
+
+    	function sendMsg() {
+    		if(is_connect){
+    			if($('#name').val() == ''){
+					alert('请先输入姓名！');
+					return false;
+				}
+
+                var name    = $("#name").val();
+                var content = $("#content").val();
+    			ws.send(name + ': ' + content);
+    			$('#content').val('');
+    		}
+    	}
+    	
+    	function addMsg(msg) {
+    		msg = JSON.parse(msg);
+    		//var text = '用户' + msg.user + '说:\n' + msg.text + '\n';
+    		var text = msg.text;
+            var message_node = document.getElementById('message');
+    		message_node.innerHTML += text+'<br />';
+    		message_node.scrollTop = message_node.scrollHeight;
+    	}
+    	function updataUserNum(msg) {
+    		$('#user_num').text(msg);
+    	}
+    	$('#J_send').on('click', sendMsg);
+
+        /**
+         * 按下回车触发回调事件
+         * @param  {Function} callback [description]
+         * @example
+         *     onkeydown="enter_press(test)"  <--- 注意：一定不能有括号，否则这里就执行了
+         * @author 蔡繁荣
+         * @version 1.1.0 build 20160326
+         */
+        function enter_press(callback){
+            var event = event || window.event;
+            if(event.keyCode == 13){
+                callback && callback();
+            }
+        }
+    </script>
+</body>
+</html>
