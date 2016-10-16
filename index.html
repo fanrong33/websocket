@@ -1,4 +1,3 @@
-</html>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,7 +27,7 @@
                             <input type="text" class="form-control" id="name" placeholder="姓名">
                         </div>
                         <div class="col-sm-8" style="padding-right: 0;">
-                            <input type="text" class="form-control" id="content" placeholder="请输入要发送的内容" onkeydown="enter_press(sendMsg)">
+                            <input type="text" class="form-control" id="content" placeholder="请输入要发送的内容" onkeydown="enter_press(send_msg)">
                         </div>
                         <div class="col-sm-2">
                             <button type="button" class="btn btn-success btn-block" id="J_send">发 送</button>
@@ -43,41 +42,47 @@
     $(document).ready(function(){
 
     });
-    	var web_socket_url = 'ws://127.0.0.1:8080'; 
+    	var web_socket_url = 'ws://192.168.1.103:8080'; 
     	var ws = new WebSocket(web_socket_url);
     	var is_connect = false;
-        ws.onopen    = onOpen;
-        ws.onclose   = onClose;
-        ws.onmessage = onMessage;
-        ws.onerror   = onError;
+        ws.onopen    = on_open_callback;
+        ws.onclose   = on_close_callback;
+        ws.onmessage = on_message_callback;
+        ws.onerror   = on_error_callback;
 
-    	function onOpen(event) { 
+    	function on_open_callback(event) { 
     		console.log("连接服务器成功");
     		is_connect = true;
     	} 
-    	function onClose(event) { 
-    		console.log("close socket"); 
-            ws.close(); //关闭TCP连接
+    	function on_close_callback(event) {
+    		console.log("close socket");
+            ws.close(); // 关闭TCP连接
     	} 
-    	function onMessage(event) {
+        /**
+         * 处理消息回调
+         */
+    	function on_message_callback(event) {
     		var data = JSON.parse(event.data);
     		switch (data.type) {
     			case 'text':
-    				addMsg(data.msg);
+    				append_msg(data.msg);
     				break;
     			case 'num' :
-    				updataUserNum(data.msg);
+    				updata_user_num(data.msg);
     				break;
     		}
     		
     		console.log('Retrieved data from server: ' + event.data);
     	}
-    	function onError(event) { 
+    	function on_error_callback(event) { 
     		console.log('Error occured: ' + event.data); 
     	}
 
 
-    	function sendMsg() {
+        /**
+         * 发送消息给socket服务器
+         */
+    	function send_msg() {
     		if(is_connect){
     			if($('#name').val() == ''){
 					alert('请先输入姓名！');
@@ -91,18 +96,17 @@
     		}
     	}
     	
-    	function addMsg(msg) {
+    	function append_msg(msg) {
     		msg = JSON.parse(msg);
-    		//var text = '用户' + msg.user + '说:\n' + msg.text + '\n';
     		var text = msg.text;
             var message_node = document.getElementById('message');
     		message_node.innerHTML += text+'<br />';
     		message_node.scrollTop = message_node.scrollHeight;
     	}
-    	function updataUserNum(msg) {
+    	function updata_user_num(msg) {
     		$('#user_num').text(msg);
     	}
-    	$('#J_send').on('click', sendMsg);
+    	$('#J_send').on('click', send_msg);
 
         /**
          * 按下回车触发回调事件

@@ -1,6 +1,6 @@
 <?php
 class Ws{
-	private $host    = '127.0.0.1';
+	private $host    = '192.168.1.103';
 	private $port    = 8080;
 	private $maxuser = 1000;
 	public  $accept  = array(); //连接的客户端

@@ -1,6 +1,8 @@
 <?php
+/** 服务端业务逻辑控制器 */
 require('WebSocket.class.php');
-$ws = new Ws('127.0.0.1', '8080', 1000);
+
+$ws = new Ws('192.168.1.103', '8080', 1000);
 $ws->function['add']   = 'add_callback';
 $ws->function['send']  = 'send_callback';
 $ws->function['close'] = 'close_callback';
@@ -9,12 +11,12 @@ $ws->start_server();
 //回调函数们
 function add_callback($ws) {
 	$data = count($ws->accept);
- 	send_to_all($data, 'num', $ws);
+ 	send_to_all($data, 'num', $ws); // 更新在线用户数
 }
 
 function close_callback($ws) {
 	$data = count($ws->accept);
-	send_to_all($data, 'num', $ws);
+	send_to_all($data, 'num', $ws); // 更新在线用户数
 }
 
 function send_callback($data, $index, $ws) {
@@ -44,6 +46,7 @@ function send_to_all($data, $type, $ws){
 		'type' => $type,
 		'msg'  => $data,
 	);
+	print_r($data);
 	$res = json_encode($res);
 	$res = $ws->frame($res);
 	foreach ($ws->accept as $key => $accept) {
